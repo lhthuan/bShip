@@ -292,7 +292,7 @@ footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--border);text-
 </div>
 
 </div>
-<footer>bShip Reconciliation Tool &nbsp;·&nbsp; v4.0 &nbsp;·&nbsp; ECM Team · TrungSon Pharma</footer>
+<footer>bShip Reconciliation Tool &nbsp;·&nbsp; v4.0 &nbsp;·&nbsp; Dữ liệu không rời thiết bị của bạn</footer>
 
 <script>
 // ═══════════════════════════════════
@@ -309,7 +309,17 @@ function loadFile(k,input){
     try{
       const wb=XLSX.read(e.target.result,{type:'array'});
       const ws=wb.Sheets[wb.SheetNames[0]];
-      S[k]=XLSX.utils.sheet_to_json(ws,{defval:''});
+      const raw=XLSX.utils.sheet_to_json(ws,{defval:''});
+      // Lọc bỏ: (1) row rỗng hoàn toàn, (2) row header bị lặp (SheetJS đôi khi đọc header như data)
+      const KNOWN_HEADERS=['STT','Mã đơn hàng','Mã vận đơn','Mã chuyến','Mã tạo chuyến'];
+      S[k]=raw.filter(r=>{
+        const vals=Object.values(r);
+        // Bỏ row toàn chuỗi rỗng
+        if(vals.every(v=>v===''||v===null||v===undefined))return false;
+        // Bỏ row header lặp: STT field có giá trị là "STT" (chuỗi) thay vì số
+        if(String(r['STT']||'').trim()==='STT')return false;
+        return true;
+      });
       setFI(k,`✓ ${f.name} — ${S[k].length.toLocaleString('vi')} dòng`,'ok');
       document.getElementById(`card-${k}`).classList.add('ok');
       checkReady();
@@ -361,17 +371,25 @@ function run(){
 
 function analyze(){
   const vd=S.vd,ds=S.ds;
+
+  // Chuẩn hóa Mã chuyến: chỉ chấp nhận giá trị là số nguyên dương (loại bỏ "-", "", "nan")
+  const normKey=v=>{
+    const s=String(v||'').trim();
+    // Mã chuyến hợp lệ: chỉ chứa chữ số, không phải "-" hay trống
+    return(/^\d+$/.test(s)&&parseInt(s)>0)?s:'';
+  };
+
   const dsMap=new Map(),vdMap=new Map();
-  ds.forEach(r=>{const k=String(r['Mã chuyến']||'').trim();if(k)dsMap.set(k,r);});
-  vd.forEach(r=>{const k=String(r['Mã chuyến']||'').trim();if(k)vdMap.set(k,r);});
+  ds.forEach(r=>{const k=normKey(r['Mã chuyến']);if(k)dsMap.set(k,r);});
+  vd.forEach(r=>{const k=normKey(r['Mã chuyến']);if(k)vdMap.set(k,r);});
 
   const matched=[],onlyVD=[],onlyDS=[],diffs=[],all=[];
 
   vd.forEach((vRow,idx)=>{
-    const key=String(vRow['Mã chuyến']||'').trim();
+    const key=normKey(vRow['Mã chuyến']);
     const dRow=key?dsMap.get(key):null;
     const rowNum=idx+1;
-    if(!key||!dRow){const it={key,vRow,dRow:null,type:'only-vd',rowNum};onlyVD.push(it);all.push(it);return;}
+    if(!key||!dRow){const it={key:key||String(vRow['Mã chuyến']||'').trim()||'—',vRow,dRow:null,type:'only-vd',rowNum};onlyVD.push(it);all.push(it);return;}
     const cVD=nCost(vRow['Phí vận chuyển']),cDS=nCost(dRow['Chi phí (VNĐ)']);
     const sVD=String(vRow['Trạng thái chuyến']||'').trim(),sDS=String(dRow['Trạng thái chuyến']||'').trim();
     const hasDiff=(cVD&&cDS&&cVD!==cDS)||(sVD&&sDS&&sVD!==sDS);
@@ -379,9 +397,9 @@ function analyze(){
     if(hasDiff)diffs.push(it);else matched.push(it);
     all.push(it);
   });
-  const vdKeySet=new Set(vd.map(r=>String(r['Mã chuyến']||'').trim()).filter(Boolean));
+  const vdKeySet=new Set(vd.map(r=>normKey(r['Mã chuyến'])).filter(Boolean));
   ds.forEach((dRow,idx)=>{
-    const key=String(dRow['Mã chuyến']||'').trim();
+    const key=normKey(dRow['Mã chuyến']);
     if(key&&!vdKeySet.has(key)){const it={key,vRow:null,dRow,type:'only-ds',rowNum:idx+1};onlyDS.push(it);all.push(it);}
   });
 
@@ -507,9 +525,12 @@ function xRow(r,idx){
   const v=r.vRow||{},d=r.dRow||{};
   const cVD=nCost(v['Phí vận chuyển']),cDS=nCost(d['Chi phí (VNĐ)']);
   const codVal=nCOD(d['COD'])||nCOD(v['Giá thu hộ']);
+  // Hiển thị Mã chuyến: dùng key đã normalize; nếu không có (đơn hủy/-) thì lấy raw từ file
+  const rawMC=String(v['Mã chuyến']||d['Mã chuyến']||'').trim();
+  const displayKey=r.key&&r.key!=='—'?r.key:(rawMC||'—');
   return{
     stt:String(idx||r.rowNum||0),
-    key:r.key||'—',
+    key:displayKey,
     maDon:String(v['Mã đơn hàng']||d['Mã đơn']||''),
     maVD:String(v['Mã vận đơn']||d['Mã vận đơn']||''),
     ngay:fDate(v['Ngày tạo']||d['Ngày tạo']||''),
