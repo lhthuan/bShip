@@ -451,11 +451,23 @@ function analyze(){
       vdMaDonSet.add(md);
       const eData=erpMap.get(md);
       const codVD=nCost(vRow['Giá thu hộ']);
-      const item={maDon:md,vRow,eData:eData||null,codVD,erpThu:eData?eData.thu:0};
+      const st=String(vRow['Trạng thái chuyến']||'').trim();
+      // Đơn không hoàn tất qua bShip → dù số tiền bằng nhau cũng không thể "Khớp"
+      const isInvalidStatus=st.includes('hủy')||st.includes('Không tìm');
+      const item={maDon:md,vRow,eData:eData||null,codVD,erpThu:eData?eData.thu:0,vdStatus:st};
       erpAll.push(item);
-      if(!eData){item.erpType='only-vd';erpOnlyVD.push(item);}
-      else if(eData.thu===codVD){item.erpType='match';erpMatch.push(item);}
-      else{item.erpType='diff';item.diff=eData.thu-codVD;erpDiff.push(item);}
+      if(!eData){
+        item.erpType='only-vd';erpOnlyVD.push(item);
+      } else if(isInvalidStatus){
+        item.erpType='warn';
+        item.diff=eData.thu;
+        item.warnReason=st.includes('hủy')?'Đơn đã hủy':'Không tìm thấy tài xế';
+        erpDiff.push(item);
+      } else if(eData.thu===codVD){
+        item.erpType='match';erpMatch.push(item);
+      } else {
+        item.erpType='diff';item.diff=eData.thu-codVD;erpDiff.push(item);
+      }
     });
     // Đơn ERP không có trong VĐ
     erpMap.forEach((eData,mvd)=>{
@@ -895,7 +907,7 @@ function renderERP(){
   const ERPTABS=[
     {id:'erp-all',   lbl:'Tất cả',          cnt:all.length},
     {id:'erp-match', lbl:'✅ Khớp',          cnt:match.length},
-    {id:'erp-diff',  lbl:'⚠️ Sai lệch',     cnt:diff.length},
+    {id:'erp-diff',  lbl:'⚠️ Sai lệch / Cần XXT', cnt:diff.length},
     {id:'erp-ovd',   lbl:'📦 Chỉ Vận Đơn',  cnt:onlyVD.length},
     {id:'erp-oerp',  lbl:'🗂️ Chỉ ERP',      cnt:onlyERP.length},
   ];
@@ -926,7 +938,7 @@ function renderERP(){
     const rows=items.map((it,i)=>{
       const v=it.vRow||{};
       const e=it.eData;
-      const isd=it.erpType==='diff';
+      const isd=it.erpType==='diff'||it.erpType==='warn';
       const maDon=it.maDon;
       const maVD=String(v['Mã vận đơn']||'').trim()||'—';
       const ngay=fDate(v['Ngày tạo']||'');
@@ -946,10 +958,15 @@ function renderERP(){
         <td>${esc(trunc(soCT,28))}</td>
         <td>${esc(trunc(khachHang,20))}</td>
         <td>${stBadge(st)}</td>
-        <td class="${isd?'dv':''}"><span class="mono">${thu?thu.toLocaleString('vi')+' ₫':'—'}</span></td>
+        <td class="${isd||it.erpType==='warn'?'dv':''}"><span class="mono">${thu?thu.toLocaleString('vi')+' ₫':'—'}</span></td>
         <td><span class="mono">${cod?cod.toLocaleString('vi')+' ₫':'—'}</span></td>
-        <td>${delta!==0?`<span class="mono" style="color:${delta>0?'var(--amber)':'var(--teal)'};font-weight:700">${delta>0?'+':''}${delta.toLocaleString('vi')} ₫</span>`:'<span class="badge b-green">Khớp</span>'}</td>
-        <td>${badge(it.erpType)}</td>
+        <td>${it.erpType==='warn'
+          ?`<span class="badge b-red" title="${esc(it.warnReason||'')}">Không hợp lệ</span>`
+          :delta!==0?`<span class="mono" style="color:${delta>0?'var(--amber)':'var(--teal)'};font-weight:700">${delta>0?'+':''}${delta.toLocaleString('vi')} ₫</span>`
+          :'<span class="badge b-green">Khớp</span>'}</td>
+        <td>${it.erpType==='warn'
+          ?`<div style="display:flex;flex-direction:column;gap:3px">${badge(it.erpType)}<span style="font-size:10px;color:var(--red)">${esc(it.warnReason||'')}</span></div>`
+          :badge(it.erpType)}</td>
       </tr>`;
     }).join('');
 
@@ -1037,7 +1054,7 @@ function expERP(subId){
       'Thực Thu ERP':e?e.thu:0,
       'Thu Hộ VĐ':it.codVD||0,
       'Chênh Lệch':it.diff||0,
-      'Kết Quả':it.erpType==='match'?'Khớp':it.erpType==='diff'?'Sai lệch':it.erpType==='only-vd'?'Chỉ VĐ':'Chỉ ERP',
+      'Kết Quả':it.erpType==='match'?'Khớp':it.erpType==='warn'?`Cần xem xét (${it.warnReason||''})`:it.erpType==='diff'?'Sai lệch':it.erpType==='only-vd'?'Chỉ VĐ':'Chỉ ERP',
     };
   });
   const ws=XLSX.utils.json_to_sheet(data);
