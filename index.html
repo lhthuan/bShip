@@ -235,7 +235,7 @@ footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--border);text-
   <div class="hd-logo">bS</div>
   <div>
     <div class="hd-t">bShip — Đối Chiếu & Phân Tích Vận Đơn</div>
-    <div class="hd-s">So sánh bShip · Đối chiếu ERP · Phân tích hiệu suất · Tra cứu &nbsp;·&nbsp; Xử lý cục bộ trên trình duyệt</div>
+    <div class="hd-s">So sánh bShip · Đối chiếu ERP · Phân tích hiệu suất · Tra cứu &nbsp;·&nbsp; Build 16.21</div>
   </div>
 </div>
 
@@ -252,7 +252,7 @@ footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--border);text-
     <div class="fi" id="fi-ds">Chưa tải file</div>
   </div>
   <div class="up-card" id="card-erp">
-    <div class="up-head"><div class="up-ico c">🗂️</div><div><div class="up-nm">File ERP <span class="erp-optional">Tuỳ chọn</span></div><div class="up-ds">Xuất ERP nội bộ — cột L: MVĐ · cột V: Thực Thu</div></div></div>
+    <div class="up-head"><div class="up-ico c">🗂️</div><div><div class="up-nm">File ERP <span class="erp-optional">Tuỳ chọn</span></div><div class="up-ds">Xuất ERP nội bộ — cột L: MVĐ · cột V: Thực Thu · cột W: httt (Yes/No)</div></div></div>
     <div class="dz" id="dz-erp"><input type="file" accept=".xlsx,.xls" id="inp-erp" onchange="loadFile('erp',this)"><div class="dz-t"><b>Chọn file</b> hoặc kéo thả · .xlsx / .xls</div></div>
     <div class="fi" id="fi-erp">Tuỳ chọn — bỏ qua nếu không cần đối chiếu ERP</div>
   </div>
@@ -338,8 +338,10 @@ function loadFile(k,input){
         if(k==='erp'){
           const mvd=String(r['MVĐ']||'').trim();
           if(!mvd||mvd==='MVĐ'||mvd.startsWith('='))return false;
-          // Phải là số (mã đơn 485xxx)
           if(!/^\d+$/.test(mvd))return false;
+          // httt=No → khách đã thanh toán trước (CK/VNPAY/Momo), không COD bShip → bỏ qua
+          const httt=String(r['httt']||'').trim().toLowerCase();
+          if(httt==='no')return false;
         }
         return true;
       });
@@ -1012,8 +1014,7 @@ function renderERP(){
   const noteHtml=`<div style="background:var(--blue-bg);border:1px solid #c5d8f8;border-radius:6px;padding:10px 14px;font-size:12px;color:var(--blue);margin-bottom:16px;display:flex;gap:8px;align-items:flex-start">
     <span style="font-size:15px;flex-shrink:0">ℹ️</span>
     <div><strong>Logic đối chiếu ERP:</strong> Nối theo <code style="background:#d1e4fc;border-radius:3px;padding:1px 4px">Mã đơn hàng (VĐ) = MVĐ (ERP)</code> &nbsp;·&nbsp;
-    So sánh <strong>Giá thu hộ (VĐ)</strong> với <strong>Thực Thu (ERP)</strong>. Khi 1 MVĐ có nhiều dòng ERP, tổng Thực Thu được cộng gộp.
-    Đơn "Chỉ VĐ" = đơn giao bShip nhưng không có bản ghi ERP (khách không COD hoặc thanh toán online).
+    So sánh <strong>Giá thu hộ (VĐ)</strong> với <strong>Thực Thu (ERP)</strong>. Khi 1 MVĐ có nhiều dòng ERP, tổng Thực Thu được cộng gộp. &nbsp;·&nbsp; <strong>Chỉ đối chiếu dòng có <code style="background:#d1e4fc;border-radius:3px;padding:1px 4px">httt = Yes</code></strong> — dòng <code style="background:#d1e4fc;border-radius:3px;padding:1px 4px">No</code> (đã TT trước qua CK/VNPAY/Momo…) tự động bỏ qua.
     </div>
   </div>`;
 
