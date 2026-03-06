@@ -206,6 +206,18 @@ td.dv{background:#fffbec}td.dv .mono{color:var(--amber);font-weight:600}
 .prog-fill{height:100%;border-radius:4px}
 .prog-pct{font:600 11px 'IBM Plex Mono',monospace;color:var(--text2);min-width:38px;text-align:right}
 
+
+/* ── ERP upload card ── */
+.up-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px}
+.up-ico.c{background:var(--teal-bg)}
+.erp-optional{font-size:10.5px;color:var(--text3);background:var(--gray-bg);border-radius:4px;padding:1px 6px;margin-left:6px;font-weight:500}
+/* ERP tab badges */
+.b-teal2{background:#e0f7fa;color:#0891b2}
+/* ERP diff row highlight */
+td.erp-match{background:#e6f7f0}td.erp-diff{background:#fff3d6}td.erp-only{background:#fdeaed}
+/* ERP summary cards */
+.erp-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:22px}
+
 /* MISC */
 #res-sec{display:none}
 .spin{width:13px;height:13px;border-radius:50%;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;animation:spin .5s linear infinite;display:inline-block}
@@ -223,12 +235,12 @@ footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--border);text-
   <div class="hd-logo">bS</div>
   <div>
     <div class="hd-t">bShip — Đối Chiếu & Phân Tích Vận Đơn</div>
-    <div class="hd-s">So sánh · Phân tích hiệu suất đối tác · Tra cứu &nbsp;·&nbsp; Xử lý cục bộ trên trình duyệt</div>
+    <div class="hd-s">So sánh bShip · Đối chiếu ERP · Phân tích hiệu suất · Tra cứu &nbsp;·&nbsp; Xử lý cục bộ trên trình duyệt</div>
   </div>
 </div>
 
 <!-- Upload -->
-<div class="up-row">
+<div class="up-row-3">
   <div class="up-card" id="card-vd">
     <div class="up-head"><div class="up-ico a">📦</div><div><div class="up-nm">File Vận Đơn</div><div class="up-ds">Nhật ký vận đơn từ portal bShip</div></div></div>
     <div class="dz" id="dz-vd"><input type="file" accept=".xlsx,.xls" id="inp-vd" onchange="loadFile('vd',this)"><div class="dz-t"><b>Chọn file</b> hoặc kéo thả · .xlsx / .xls</div></div>
@@ -238,6 +250,11 @@ footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--border);text-
     <div class="up-head"><div class="up-ico b">🧾</div><div><div class="up-nm">File Đối Soát</div><div class="up-ds">Bảng đối soát từ portal bShip</div></div></div>
     <div class="dz" id="dz-ds"><input type="file" accept=".xlsx,.xls" id="inp-ds" onchange="loadFile('ds',this)"><div class="dz-t"><b>Chọn file</b> hoặc kéo thả · .xlsx / .xls</div></div>
     <div class="fi" id="fi-ds">Chưa tải file</div>
+  </div>
+  <div class="up-card" id="card-erp">
+    <div class="up-head"><div class="up-ico c">🗂️</div><div><div class="up-nm">File ERP <span class="erp-optional">Tuỳ chọn</span></div><div class="up-ds">Xuất ERP nội bộ — cột L: MVĐ · cột V: Thực Thu</div></div></div>
+    <div class="dz" id="dz-erp"><input type="file" accept=".xlsx,.xls" id="inp-erp" onchange="loadFile('erp',this)"><div class="dz-t"><b>Chọn file</b> hoặc kéo thả · .xlsx / .xls</div></div>
+    <div class="fi" id="fi-erp">Tuỳ chọn — bỏ qua nếu không cần đối chiếu ERP</div>
   </div>
 </div>
 
@@ -259,6 +276,7 @@ footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--border);text-
     <button class="tb"        data-tab="only-vd" onclick="sw('only-vd')">📦 Chỉ Vận Đơn <span class="tc" id="tc-only-vd">0</span></button>
     <button class="tb"        data-tab="only-ds" onclick="sw('only-ds')">🧾 Chỉ Đối Soát <span class="tc" id="tc-only-ds">0</span></button>
     <button class="tb"        data-tab="diff"    onclick="sw('diff')">⚠️ Sai Lệch <span class="tc" id="tc-diff">0</span></button>
+    <button class="tb"        data-tab="erp"     onclick="sw('erp')">🗂️ Đối Chiếu ERP <span class="tc" id="tc-erp" style="display:none">0</span></button>
     <button class="tb"        data-tab="perf"    onclick="sw('perf')">📊 Phân Tích Hiệu Suất</button>
     <button class="tb"        data-tab="lookup"  onclick="sw('lookup')">🔎 Tra Cứu</button>
   </div>
@@ -268,6 +286,7 @@ footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--border);text-
   <div id="p-only-vd" class="tab-panel"></div>
   <div id="p-only-ds" class="tab-panel"></div>
   <div id="p-diff"    class="tab-panel"></div>
+  <div id="p-erp"     class="tab-panel"></div>
   <div id="p-perf"    class="tab-panel"></div>
 
   <!-- TRA CỨU -->
@@ -292,13 +311,13 @@ footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--border);text-
 </div>
 
 </div>
-<footer>bShip Reconciliation Tool &nbsp;·&nbsp; v4.0 &nbsp;·&nbsp; Build 06.03.2026</footer>
+<footer>bShip Reconciliation Tool &nbsp;·&nbsp; v4.0 &nbsp;·&nbsp; Dữ liệu không rời thiết bị của bạn</footer>
 
 <script>
 // ═══════════════════════════════════
 // STATE & HELPERS
 // ═══════════════════════════════════
-const S={vd:null,ds:null};
+const S={vd:null,ds:null,erp:null};
 let R=null;
 const PANEL_STATE={}; // per-tab sort/filter state
 
@@ -310,14 +329,18 @@ function loadFile(k,input){
       const wb=XLSX.read(e.target.result,{type:'array'});
       const ws=wb.Sheets[wb.SheetNames[0]];
       const raw=XLSX.utils.sheet_to_json(ws,{defval:''});
-      // Lọc bỏ: (1) row rỗng hoàn toàn, (2) row header bị lặp (SheetJS đôi khi đọc header như data)
-      const KNOWN_HEADERS=['STT','Mã đơn hàng','Mã vận đơn','Mã chuyến','Mã tạo chuyến'];
+      // Lọc bỏ: (1) row rỗng hoàn toàn, (2) row header bị lặp, (3) dòng SUBTOTAL/formula
       S[k]=raw.filter(r=>{
         const vals=Object.values(r);
-        // Bỏ row toàn chuỗi rỗng
         if(vals.every(v=>v===''||v===null||v===undefined))return false;
-        // Bỏ row header lặp: STT field có giá trị là "STT" (chuỗi) thay vì số
         if(String(r['STT']||'').trim()==='STT')return false;
+        // ERP: bỏ dòng SUBTOTAL (MVĐ rỗng hoặc formula) và dòng header lặp
+        if(k==='erp'){
+          const mvd=String(r['MVĐ']||'').trim();
+          if(!mvd||mvd==='MVĐ'||mvd.startsWith('='))return false;
+          // Phải là số (mã đơn 485xxx)
+          if(!/^\d+$/.test(mvd))return false;
+        }
         return true;
       });
       setFI(k,`✓ ${f.name} — ${S[k].length.toLocaleString('vi')} dòng`,'ok');
@@ -331,9 +354,10 @@ function setFI(k,msg,cls){const el=document.getElementById(`fi-${k}`);el.textCon
 function checkReady(){
   const ok=S.vd&&S.ds;
   document.getElementById('btn-run').disabled=!ok;
-  document.getElementById('run-note').textContent=ok?'Sẵn sàng — nhấn để đối chiếu':'Tải cả 2 file để bắt đầu';
+  const erpNote=S.erp?` · ERP: ${S.erp.length} dòng`:'';
+  document.getElementById('run-note').textContent=ok?`Sẵn sàng — nhấn để đối chiếu${erpNote}`:'Tải file Vận Đơn và Đối Soát để bắt đầu';
 }
-['vd','ds'].forEach(k=>{
+['vd','ds','erp'].forEach(k=>{
   const dz=document.getElementById(`dz-${k}`);
   dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
   dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
@@ -403,9 +427,56 @@ function analyze(){
     if(key&&!vdKeySet.has(key)){const it={key,vRow:null,dRow,type:'only-ds',rowNum:idx+1};onlyDS.push(it);all.push(it);}
   });
 
-  R={all,matched,onlyVD,onlyDS,diffs,vd,ds,dsMap,vdMap};
+  // ── ERP đối chiếu ──────────────────────────────────────────────
+  let erpMap=new Map(),erpResults=null;
+  if(S.erp&&S.erp.length){
+    // Build ERP map: MVĐ (= Mã đơn hàng) -> {totalThu, rows[]}
+    S.erp.forEach(r=>{
+      const mvd=String(r['MVĐ']||'').trim();
+      if(!mvd)return;
+      if(!erpMap.has(mvd))erpMap.set(mvd,{thu:0,rows:[],khachHang:'',soCT:[]});
+      const m=erpMap.get(mvd);
+      m.thu+=nCost(r['Thực Thu']);
+      m.rows.push(r);
+      if(!m.khachHang)m.khachHang=String(r['Tên Khách Hàng']||'');
+      const sc=String(r['Số CT']||'').trim();
+      if(sc)m.soCT.push(sc);
+    });
+    // Đối chiếu: với mỗi đơn VĐ, tìm trong ERP và so sánh Thực Thu vs Giá thu hộ
+    const erpMatch=[],erpDiff=[],erpOnlyERP=[],erpOnlyVD=[],erpAll=[];
+    const vdMaDonSet=new Set();
+    vd.forEach(vRow=>{
+      const md=normKey(vRow['Mã đơn hàng'])||String(vRow['Mã đơn hàng']||'').trim();
+      if(!md)return;
+      vdMaDonSet.add(md);
+      const eData=erpMap.get(md);
+      const codVD=nCost(vRow['Giá thu hộ']);
+      const item={maDon:md,vRow,eData:eData||null,codVD,erpThu:eData?eData.thu:0};
+      erpAll.push(item);
+      if(!eData){item.erpType='only-vd';erpOnlyVD.push(item);}
+      else if(eData.thu===codVD){item.erpType='match';erpMatch.push(item);}
+      else{item.erpType='diff';item.diff=eData.thu-codVD;erpDiff.push(item);}
+    });
+    // Đơn ERP không có trong VĐ
+    erpMap.forEach((eData,mvd)=>{
+      if(!vdMaDonSet.has(mvd)){
+        const item={maDon:mvd,vRow:null,eData,codVD:0,erpThu:eData.thu,erpType:'only-erp',diff:eData.thu};
+        erpOnlyERP.push(item);erpAll.push(item);
+      }
+    });
+    erpResults={all:erpAll,match:erpMatch,diff:erpDiff,onlyVD:erpOnlyVD,onlyERP:erpOnlyERP};
+    // Update tab badge
+    const tcErp=document.getElementById('tc-erp');
+    if(tcErp){tcErp.textContent=erpDiff.length;tcErp.style.display=erpDiff.length?'':'none';}
+    document.querySelector('[data-tab="erp"]').style.opacity='1';
+  }else{
+    document.querySelector('[data-tab="erp"]').style.opacity='.45';
+  }
+
+  R={all,matched,onlyVD,onlyDS,diffs,vd,ds,dsMap,vdMap,erpMap,erpResults};
   renderSummary();
   ['all','matched','only-vd','only-ds','diff'].forEach(t=>renderPanel(t));
+  if(S.erp&&S.erp.length)renderERP();
   renderPerf();
   sw('all');
   document.getElementById('res-sec').style.display='block';
@@ -785,6 +856,195 @@ function expPanel(tabKey){
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,EXP_LABELS[tabKey]||tabKey);
   XLSX.writeFile(wb,`bship-${EXP_LABELS[tabKey]}-${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+// ═══════════════════════════════════════════════════
+// ĐỐI CHIẾU ERP
+// ═══════════════════════════════════════════════════
+function renderERP(){
+  const er=R.erpResults;
+  if(!er){document.getElementById('p-erp').innerHTML='<div class="empty"><div class="empty-ico">🗂️</div>Chưa tải file ERP</div>';return;}
+  const panel=document.getElementById('p-erp');
+
+  const {all,match,diff,onlyVD,onlyERP}=er;
+  const totalErpThu=er.all.filter(i=>i.eData).reduce((s,i)=>s+i.erpThu,0);
+  const totalCodVD=er.all.filter(i=>i.codVD>0).reduce((s,i)=>s+i.codVD,0);
+  const totalDiff=diff.reduce((s,i)=>s+Math.abs(i.diff||0),0);
+
+  // ── KPI ──────────────────────────────────────────
+  const kpiHtml=`
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-bottom:20px">
+    <div class="kpi k-blue"><div class="kpi-lbl">Tổng Đơn ERP</div>
+      <div class="kpi-val c-blue">${all.length}</div>
+      <div class="kpi-sub">${S.erp.length} dòng ERP (${[...R.erpMap.keys()].length} MVĐ)</div></div>
+    <div class="kpi k-green"><div class="kpi-lbl">Khớp hoàn toàn</div>
+      <div class="kpi-val c-green">${match.length}</div>
+      <div class="kpi-sub">${all.length?((match.length/all.length)*100).toFixed(1):0}% tổng đơn</div></div>
+    <div class="kpi k-amber"><div class="kpi-lbl">Sai lệch số tiền</div>
+      <div class="kpi-val c-amber">${diff.length}</div>
+      <div class="kpi-sub">Chênh tổng: ${totalDiff.toLocaleString('vi')} ₫</div></div>
+    <div class="kpi k-purple"><div class="kpi-lbl">VĐ chưa có ERP</div>
+      <div class="kpi-val c-purple">${onlyVD.length}</div>
+      <div class="kpi-sub">Đơn không tìm thấy trong ERP</div></div>
+    <div class="kpi k-red"><div class="kpi-lbl">ERP không có VĐ</div>
+      <div class="kpi-val c-red">${onlyERP.length}</div>
+      <div class="kpi-sub">MVĐ ERP thiếu trong vận đơn</div></div>
+  </div>`;
+
+  // ── Toolbar + Sub-tabs ──────────────────────────
+  const ERPTABS=[
+    {id:'erp-all',   lbl:'Tất cả',          cnt:all.length},
+    {id:'erp-match', lbl:'✅ Khớp',          cnt:match.length},
+    {id:'erp-diff',  lbl:'⚠️ Sai lệch',     cnt:diff.length},
+    {id:'erp-ovd',   lbl:'📦 Chỉ Vận Đơn',  cnt:onlyVD.length},
+    {id:'erp-oerp',  lbl:'🗂️ Chỉ ERP',      cnt:onlyERP.length},
+  ];
+  const subtabHtml=`<div style="display:flex;gap:1px;border-bottom:2px solid var(--border);margin-bottom:14px;overflow-x:auto">
+    ${ERPTABS.map((t,i)=>`<button class="tb${i===0?' active':''}" data-etab="${t.id}" onclick="swERP('${t.id}')" style="font-size:12px">
+      ${t.lbl} <span class="tc" style="${i===2&&t.cnt>0?'background:var(--amber-bg);color:var(--amber)':''}">${t.cnt}</span>
+    </button>`).join('')}
+  </div>`;
+
+  // ── Build table for a set of items ──────────────
+  const badge=(type)=>{
+    if(type==='match')return'<span class="badge b-green">✓ Khớp</span>';
+    if(type==='diff')return'<span class="badge b-amber">⚠ Sai lệch</span>';
+    if(type==='only-vd')return'<span class="badge b-blue">Chỉ VĐ</span>';
+    if(type==='only-erp')return'<span class="badge b-red">Chỉ ERP</span>';
+    return'';
+  };
+
+  const stBadge=s=>{if(!s)return'<span class="badge b-gray">—</span>';if(s.includes('hoàn tất'))return`<span class="badge b-green">${esc(s)}</span>`;if(s.includes('hủy'))return`<span class="badge b-red">${esc(s)}</span>`;return`<span class="badge b-amber">${esc(s)}</span>`;};
+
+  const buildERPTable=(items,id)=>{
+    if(!items.length)return`<div id="${id}" class="erp-sub" style="display:none"><div class="empty"><div class="empty-ico">📭</div>Không có dữ liệu</div></div>`;
+    // Sum footer
+    const sumThu=items.filter(i=>i.eData).reduce((s,i)=>s+i.erpThu,0);
+    const sumCod=items.reduce((s,i)=>s+i.codVD,0);
+    const sumDelta=items.reduce((s,i)=>s+(i.diff||0),0);
+
+    const rows=items.map((it,i)=>{
+      const v=it.vRow||{};
+      const e=it.eData;
+      const isd=it.erpType==='diff';
+      const maDon=it.maDon;
+      const maVD=String(v['Mã vận đơn']||'').trim()||'—';
+      const ngay=fDate(v['Ngày tạo']||'');
+      const nguoiNhan=String(v['Người nhận']||e?.khachHang||'');
+      const st=String(v['Trạng thái chuyến']||'');
+      const thu=it.erpThu;
+      const cod=it.codVD;
+      const delta=it.diff||0;
+      const soCT=e?e.soCT.join(', '):'—';
+      const khachHang=e?e.khachHang:'—';
+      return`<tr>
+        <td class="td-stt">${i+1}</td>
+        <td><span class="mono">${esc(maDon)}</span></td>
+        <td><span title="${esc(maVD)}" class="mono" style="font-size:11px">${esc(trunc(maVD,32))}</span></td>
+        <td>${esc(ngay)}</td>
+        <td>${esc(trunc(nguoiNhan,22))}</td>
+        <td>${esc(trunc(soCT,28))}</td>
+        <td>${esc(trunc(khachHang,20))}</td>
+        <td>${stBadge(st)}</td>
+        <td class="${isd?'dv':''}"><span class="mono">${thu?thu.toLocaleString('vi')+' ₫':'—'}</span></td>
+        <td><span class="mono">${cod?cod.toLocaleString('vi')+' ₫':'—'}</span></td>
+        <td>${delta!==0?`<span class="mono" style="color:${delta>0?'var(--amber)':'var(--teal)'};font-weight:700">${delta>0?'+':''}${delta.toLocaleString('vi')} ₫</span>`:'<span class="badge b-green">Khớp</span>'}</td>
+        <td>${badge(it.erpType)}</td>
+      </tr>`;
+    }).join('');
+
+    return`<div id="${id}" class="erp-sub" style="${id!=='erp-all'?'display:none':''}">
+      <div class="twrap" style="max-height:460px">
+        <table>
+          <thead><tr>
+            <th class="th-stt"><div class="th-inner">STT</div></th>
+            <th><div class="th-inner">Mã Đơn</div></th>
+            <th><div class="th-inner">Mã Vận Đơn</div></th>
+            <th><div class="th-inner">Ngày Tạo</div></th>
+            <th><div class="th-inner">Người Nhận</div></th>
+            <th><div class="th-inner">Số CT (ERP)</div></th>
+            <th><div class="th-inner">Khách Hàng (ERP)</div></th>
+            <th><div class="th-inner">Trạng Thái</div></th>
+            <th><div class="th-inner">Thực Thu (ERP)</div></th>
+            <th><div class="th-inner">Thu Hộ (VĐ)</div></th>
+            <th><div class="th-inner">Chênh Lệch</div></th>
+            <th><div class="th-inner">Kết Quả</div></th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div class="tfoot-wrap"><table><tfoot><tr>
+        <td class="td-stt" style="background:var(--surface3)"></td>
+        <td class="sum-lbl">∑ TỔNG (${items.length} dòng)</td>
+        <td></td><td></td><td></td><td></td><td></td><td></td>
+        <td class="sum-val"><span class="mono">${sumThu?sumThu.toLocaleString('vi')+' ₫':'—'}</span></td>
+        <td class="sum-val"><span class="mono">${sumCod?sumCod.toLocaleString('vi')+' ₫':'—'}</span></td>
+        <td class="sum-val"><span class="mono" style="color:${sumDelta>0?'var(--amber)':sumDelta<0?'var(--teal)':'var(--green)'}">${sumDelta!==0?(sumDelta>0?'+':'')+sumDelta.toLocaleString('vi')+' ₫':'Khớp'}</span></td>
+        <td></td>
+      </tr></tfoot></table></div>
+      <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn-exp" onclick="expERP('${id}')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Xuất Excel
+        </button>
+      </div>
+    </div>`;
+  };
+
+  // ── Note giải thích ──────────────────────────────
+  const noteHtml=`<div style="background:var(--blue-bg);border:1px solid #c5d8f8;border-radius:6px;padding:10px 14px;font-size:12px;color:var(--blue);margin-bottom:16px;display:flex;gap:8px;align-items:flex-start">
+    <span style="font-size:15px;flex-shrink:0">ℹ️</span>
+    <div><strong>Logic đối chiếu ERP:</strong> Nối theo <code style="background:#d1e4fc;border-radius:3px;padding:1px 4px">Mã đơn hàng (VĐ) = MVĐ (ERP)</code> &nbsp;·&nbsp;
+    So sánh <strong>Giá thu hộ (VĐ)</strong> với <strong>Thực Thu (ERP)</strong>. Khi 1 MVĐ có nhiều dòng ERP, tổng Thực Thu được cộng gộp.
+    Đơn "Chỉ VĐ" = đơn giao bShip nhưng không có bản ghi ERP (khách không COD hoặc thanh toán online).
+    </div>
+  </div>`;
+
+  // Store items for export
+  panel._erpSets={'erp-all':all,'erp-match':match,'erp-diff':diff,'erp-ovd':onlyVD,'erp-oerp':onlyERP};
+
+  panel.innerHTML=kpiHtml+noteHtml+subtabHtml+
+    buildERPTable(all,'erp-all')+
+    buildERPTable(match,'erp-match')+
+    buildERPTable(diff,'erp-diff')+
+    buildERPTable(onlyVD,'erp-ovd')+
+    buildERPTable(onlyERP,'erp-oerp');
+}
+
+function swERP(id){
+  document.querySelectorAll('[data-etab]').forEach(b=>b.classList.toggle('active',b.dataset.etab===id));
+  document.querySelectorAll('.erp-sub').forEach(d=>d.style.display='none');
+  const el=document.getElementById(id);
+  if(el)el.style.display='block';
+}
+
+function expERP(subId){
+  const panel=document.getElementById('p-erp');
+  const sets=panel._erpSets;
+  if(!sets||!sets[subId])return;
+  const items=sets[subId];
+  if(!items.length)return alert('Không có dữ liệu để xuất');
+  const data=items.map((it,i)=>{
+    const v=it.vRow||{};const e=it.eData;
+    return{
+      'STT':i+1,'Mã Đơn Hàng':it.maDon,
+      'Mã Vận Đơn':String(v['Mã vận đơn']||''),
+      'Ngày Tạo':String(v['Ngày tạo']||''),
+      'Người Nhận':String(v['Người nhận']||e?.khachHang||''),
+      'Trạng Thái VĐ':String(v['Trạng thái chuyến']||''),
+      'Số CT ERP':e?e.soCT.join(' | '):'',
+      'Khách Hàng ERP':e?e.khachHang:'',
+      'Thực Thu ERP':e?e.thu:0,
+      'Thu Hộ VĐ':it.codVD||0,
+      'Chênh Lệch':it.diff||0,
+      'Kết Quả':it.erpType==='match'?'Khớp':it.erpType==='diff'?'Sai lệch':it.erpType==='only-vd'?'Chỉ VĐ':'Chỉ ERP',
+    };
+  });
+  const ws=XLSX.utils.json_to_sheet(data);
+  ws['!cols']=[5,14,30,12,22,20,24,20,14,14,14,12].map(w=>({wch:w}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'ERP-DoiChieu');
+  XLSX.writeFile(wb,`bship-erp-${subId}-${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
 // ═══════════════════════════════════════════════════
