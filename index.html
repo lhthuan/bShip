@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>bShip — Đối Chiếu Vận Đơn v4 Build 6.3.26</title>
+<title>bShip — Đối Chiếu Vận Đơn v4</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -292,7 +292,7 @@ footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--border);text-
 </div>
 
 </div>
-<footer>bShip Reconciliation Tool &nbsp;·&nbsp; v4.0 &nbsp;·&nbsp; Dữ liệu không rời thiết bị của bạn</footer>
+<footer>bShip Reconciliation Tool &nbsp;·&nbsp; v4.0 &nbsp;·&nbsp; Build 06.03.2026</footer>
 
 <script>
 // ═══════════════════════════════════
@@ -810,8 +810,10 @@ function renderPerf(){
   const avgDist=allDist.length?(allDist.reduce((a,b)=>a+b,0)/allDist.length).toFixed(2):0;
   const totalDist=allDist.reduce((a,b)=>a+b,0).toFixed(1);
 
-  const totalCOD=vd.map(r=>nCOD(r['Giá thu hộ'])).filter(v=>v>0).reduce((a,b)=>a+b,0);
-  const codOrders=vd.filter(r=>nCOD(r['Giá thu hộ'])>0).length;
+  // COD: chỉ tính đơn hoàn tất (đơn hủy/ko có TX chưa thu tiền)
+  const vdDone=vd.filter(r=>String(r['Trạng thái chuyến']||'').includes('hoàn tất'));
+  const totalCOD=vdDone.map(r=>nCOD(r['Giá thu hộ'])).filter(v=>v>0).reduce((a,b)=>a+b,0);
+  const codOrders=vdDone.filter(r=>nCOD(r['Giá thu hộ'])>0).length;
 
   // DS metrics
   const dsTotalFee=ds.map(r=>nCost(r['Chi phí (VNĐ)'])).filter(v=>v>0).reduce((a,b)=>a+b,0);
@@ -831,7 +833,8 @@ function renderPerf(){
     if(st.includes('hoàn tất'))m.done++;
     if(st.includes('hủy')||st.includes('Không tìm'))m.cancel++;
     m.fee+=nCost(r['Phí vận chuyển']);
-    m.cod+=nCOD(r['Giá thu hộ']);
+    // COD chỉ cộng khi hoàn tất
+    if(st.includes('hoàn tất'))m.cod+=nCOD(r['Giá thu hộ']);
   });
   const senders=[...senderMap.entries()].sort((a,b)=>b[1].total-a[1].total).slice(0,15);
 
@@ -907,7 +910,7 @@ function renderPerf(){
     <div class="kpi k-teal"><div class="kpi-lbl">Khoảng cách TB</div>
       <div class="kpi-val c-teal">${avgDist} km</div>
       <div class="kpi-sub">Tổng: ${totalDist} km</div></div>
-    <div class="kpi k-purple"><div class="kpi-lbl">Thu hộ (COD)</div>
+    <div class="kpi k-purple"><div class="kpi-lbl">Thu hộ COD (đã giao)</div>
       <div class="kpi-val c-purple">${totalCOD.toLocaleString('vi')}₫</div>
       <div class="kpi-sub">${codOrders.toLocaleString('vi')} đơn có COD</div></div>
   </div>`;
